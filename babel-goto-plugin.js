@@ -19,12 +19,10 @@ module.exports = function({ types: t }) {
   return {
     visitor: {
       BlockStatement(path) {
-        // Split along labels
         var labels = [];
         
         var splitted = path.node.body.reduce(function(arr, el) {
-          // FIXME: matching on the label is really bad
-          if (t.isLabeledStatement(el) && ! el.label.name.match(/trampoline/)) {
+          if (t.isLabeledStatement(el) && ! el.trampoline) {
             arr.push([el]);
             labels.push( el.label.name );
           } else {
