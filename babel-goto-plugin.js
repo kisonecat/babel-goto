@@ -1,24 +1,15 @@
 const fs = require('fs');
 
-var labelsToNumbers = {};
-var newLabel = 1;
-function labelToNumber(label) {
-  var n = labelsToNumbers[label];
-  if (n === undefined) {
-    n = labelsToNumbers[label] = newLabel;
-    newLabel++;
-  }
-  return n;
-}
-
 const replaceGotos = {
   CallExpression(path) {
     if (path.node.callee.name == "goto") {
       var t = this.types;
-      var n = labelToNumber(path.node.arguments[0].name);
-      path.replaceWithMultiple([t.expressionStatement(t.assignmentExpression("=", this.var, t.numericLiteral(n))),
-                                t.continueStatement( this.label )]);
-      
+      var label = path.node.arguments[0].name;
+      if (this.labels.indexOf(label) >= 0) {
+        var n = this.labels.indexOf(label) + 1;
+        path.replaceWithMultiple([t.expressionStatement(t.assignmentExpression("=", this.var, t.numericLiteral(n))),
+                                  t.continueStatement( this.var )]);
+      }
     }
     return;
   }
@@ -29,10 +20,13 @@ module.exports = function({ types: t }) {
     visitor: {
       BlockStatement(path) {
         // Split along labels
+        var labels = [];
+        
         var splitted = path.node.body.reduce(function(arr, el) {
           // FIXME: matching on the label is really bad
           if (t.isLabeledStatement(el) && ! el.label.name.match(/trampoline/)) {
             arr.push([el]);
+            labels.push( el.label.name );
           } else {
             arr[arr.length - 1].push(el);
           }
@@ -42,34 +36,38 @@ module.exports = function({ types: t }) {
         if (splitted.length == 1)
           return;
 
-        var switches = splitted.map( function(s) {
-          if (s.length == 0) return s;
-          
-          if (t.isLabeledStatement(s[0])) {
-            var label = s[0].label.name;
-            var n = labelToNumber(label);
+        var switches = splitted
+            .filter( function(s) { return s.length > 0; } )
+            .map( function(s) {
+              if (s.length == 0) return s;
               
-            return t.switchCase(t.numericLiteral(n), [s[0].body].concat( s.slice(1) ) );
-          } else
-            return t.switchCase(t.numericLiteral(0), s );
+              if (t.isLabeledStatement(s[0])) {
+                var label = s[0].label.name;
+                var n = labels.indexOf(label) + 1;
+                
+                return t.switchCase(t.numericLiteral(n), [s[0].body].concat( s.slice(1) ) );
+              } else
+                return t.switchCase(t.numericLiteral(0), s );
+              
+              return t.switchCase(t.numericLiteral(17), s );
+            });
 
-          return s;
-        });
-
+        switches.unshift( t.switchCase(t.numericLiteral(0), [] ) );
+        
         var trampoline = path.scope.generateUidIdentifier("trampoline");
-        var trampolineLabel = path.scope.generateUidIdentifier("trampolineLabel");        
+        
         var declareTrampoline =
             t.variableDeclaration("var", [t.variableDeclarator(trampoline, t.numericLiteral(0))]);
 
         var whileStatement = t.whileStatement(t.booleanLiteral(true),
                                               t.blockStatement([t.switchStatement(trampoline, switches),
-                                                                t.breakStatement( trampolineLabel )
+                                                                t.breakStatement( trampoline )
                                                                ]));
-        var loop = t.labeledStatement( trampolineLabel, whileStatement );
+        var loop = t.labeledStatement( trampoline, whileStatement );
         loop.trampoline = true;
 
         path.replaceWith( t.blockStatement([declareTrampoline, loop ]) );
-        path.traverse(replaceGotos, { types: t, var: trampoline, label: trampolineLabel });
+        path.traverse(replaceGotos, { types: t, var: trampoline, labels: labels });
       },
     }
   };
