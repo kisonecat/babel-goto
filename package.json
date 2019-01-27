@@ -1,11 +1,17 @@
 {
   "name": "babel-goto",
   "version": "1.0.0",
-  "description": "Add support for local GOTO to javascript",
+  "description": "Support GOTO in JavaScript",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.3.1",
+    "babel-cli": "^6.26.0",
+    "babylon": "^6.18.0"
+  }
 }
