@@ -21,6 +21,19 @@ function loop() {
 loop();
 ```
 
+## Installation
+
+Install the plugin with `npm install babel-plugin-goto` and create a `.babelrc` file
+```
+{
+  "presets": [],
+  "plugins": [
+    "babel-plugin-goto"
+  ]
+}
+```
+Then you can run code involving goto with `babel-node`.
+
 ## How does this work?
 
 Blocks that include labels are rewritten as labeled infinite loops
