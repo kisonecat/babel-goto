@@ -21,11 +21,6 @@ function loop() {
 loop();
 ```
 
-Run this with:
-```
-babel-node --plugins ./babel-goto-plugin index.js
-```
-
 ## How does this work?
 
 Blocks that include labels are rewritten as labeled infinite loops
