@@ -1,5 +1,3 @@
-const fs = require('fs');
-
 const replaceGotos = {
   CallExpression(path) {
     if (path.node.callee.name == "goto") {
