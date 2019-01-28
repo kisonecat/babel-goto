@@ -45,10 +45,11 @@ since control jumps back to the beginning (via the labeled continue)
 and then to the appropriate labeled position (via the switch
 statement).
 
-There are limitations: it isn't possible to `goto` a label in a deeper
-block.  On the other hand, it *is* possible to jump both forward and
-backward.
+There are limitations.  On the other hand, it *is* possible to jump
+both forward and backward.
 
 ## Credits
 
 Inspired by [Alex Sexton's Summer of Goto](https://alexsexton.com/blog/2009/07/goto-dot-js/).
+
+A similar project is [RReverser's fork of Facebook's regenerator](https://github.com/RReverser/js-goto-transpiler).
